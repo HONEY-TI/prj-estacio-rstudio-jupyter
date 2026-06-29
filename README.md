@@ -1,311 +1,257 @@
-# 🚀 Ambiente RStudio + JupyterLab com Docker
+# 🚀 Plataforma Data Science + Apache Spark + RStudio + Jupyter
 
-Ambiente de desenvolvimento utilizando:
+## 📌 Visão Geral
 
-- 🐳 Docker
-- 📊 RStudio Server
-- 📓 JupyterLab
-- 🐍 Python
-- 📈 R
-- 🔬 Data Science Stack
-
----
-
-# 🌐 Serviços Disponíveis
-
-| Serviço | URL |
-|---|---|
-| 📊 RStudio Server | `http://localhost:8787` |
-| 📓 JupyterLab | `http://localhost:8888` |
+Ambiente integrado para:
+* 🧪 RStudio Server
+* 🐍 Python + JupyterLab
+* ⚡ Apache Spark Cluster
+* 🔥 PySpark
+* 📦 Docker Compose
+* 🖥️ VS Code DevContainer
 
 ---
 
-# 📊 Acesso ao RStudio Server
-
-## 🔗 URL
-
-```txt
-http://localhost:8787
+# 🏗️ Arquitetura Macro
+```mermaid
+flowchart TB
+    U[👤 Usuário]
+    VS[🖥️ VS Code DevContainer]
+    R[📊 RStudio Container
+    R + Python + Jupyter]
+    SM[⚡ Spark Master
+    spark://spark-master:7077]
+    SW[⚙️ Spark Worker
+    Executor]
+    FS[📂 Workspace]
+    U --> VS
+    VS --> R
+    R --> SM
+    SM --> SW
+    R --> FS
+    SW --> FS
 ```
 
 ---
 
-## 👤 Usuário
-
-```txt
-rdtudio
+# 🧩 Arquitetura Micro - RStudio
+```mermaid
+flowchart LR
+subgraph RSTUDIO["📊 rstudio-dev-base"]
+RS[RStudio Server
+8787]
+JL[JupyterLab
+8888]
+PY[Python VirtualEnv
+/opt/venv]
+PS[PySpark]
+SP[Apache Spark
+/opt/spark]
+end
+RS --> PY
+JL --> PY
+PY --> PS
+PS --> SP
 ```
 
 ---
 
-## 🔑 Senha
+# ⚡ Arquitetura da Plataforma
 
-Definida no `docker-compose.yml`:
+> Este diagrama representa a arquitetura de execução dos containers Docker, demonstrando a rede interna `spark-network`, o container de desenvolvimento RStudio atuando com Spark Driver e a comunicação com o cluster Spark Standalone composto pelo Master e Worker.
+> 
+## 1. Diagrama de Arquitetura Docker Spark + RStudio
+```mermaid
+flowchart LR
+R[📊 rstudio-dev-base]
+M[⚡ spark-master]
+W[⚙️ spark-worker]
+NET{{🐳 spark-network}}
+R --- NET
+M --- NET
+W --- NET
+R -->|spark://spark-master:7077| M
+M --> W
+```
 
+## 2. Diagrama de Arquitetura Spark Runtime
+```mermaid
+flowchart TD
+APP[🐍 Aplicação PySpark]
+DRIVER[🧠 Spark Driver]
+MASTER[⚡ Spark Master]
+WORKER[⚙️ Spark Worker]
+APP --> DRIVER
+DRIVER --> MASTER
+MASTER --> WORKER
+WORKER --> DRIVER
+```
+
+---
+
+# 🔄 Sequência de Execução PySpark
+```mermaid
+sequenceDiagram
+participant User as 👤 Usuário
+participant R as 📊 RStudio/Jupyter
+participant Driver as 🧠 Driver
+participant Master as ⚡ Master
+participant Worker as ⚙️ Worker
+User->>R: Executa código PySpark
+R->>Driver: Cria SparkSession
+Driver->>Master: Solicita recursos
+Master->>Worker: Aloca Executor
+Worker-->>Driver: Recursos disponíveis
+Driver->>Worker: Executa processamento
+Worker-->>R: Retorna resultado
+R-->>User: Exibe dados
+```
+
+---
+
+# 🚀 Inicialização do Container
+```mermaid
+sequenceDiagram
+participant Docker
+participant Entry as 🚪 entrypoint.sh
+participant User as 👤 rstudio
+participant Jupyter as 📒 Jupyter
+participant Init as 🔧 rocker init
+Docker->>Entry: inicia container
+Entry->>User: muda usuário
+Entry->>Jupyter: inicia JupyterLab
+Entry->>Init: inicia RStudio
+Init->>Docker: mantém container ativo
+```
+
+---
+
+# 🔁 Fluxo do Entrypoint
+```mermaid
+flowchart TD
+START[🚀 Container iniciado]
+CHECK{Existe comando?}
+CHECK -->|Não| JUPYTER[📒 Iniciar Jupyter]
+CHECK -->|Sim| CMD[Executar comando]
+JUPYTER --> INIT[🔧 /init]
+INIT --> END[Container ativo]
+CMD --> END
+```
+
+---
+
+# ☕ Java e Apache Spark
+Spark 3.5.x utiliza melhor:
+```
+Spark 3.5.1
+      |
+      |
+Java 17 LTS
+      |
+      |
+PySpark
+      |
+      |
+Python
+```
+Configuração:
 ```yaml
-environment:
-  PASSWORD: toor
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+```
+
+## ⚠️ Java 26
+Evitar:
+```
+openjdk-26
+```
+Motivo:
+* incompatibilidade JVM
+* bibliotecas Spark podem falhar
+* versão fora do ciclo LTS
+Recomendado:
+```
+Java 17
+   +
+Spark 3.5
+   +
+Python 3
 ```
 
 ---
 
-## ✅ Login Completo
-
-| Campo | Valor |
-|---|---|
-| 👤 Usuário | `rstudio` |
-| 🔑 Senha | `toor` |
-
----
-
-# 📓 Acesso ao JupyterLab
-
-## 🔗 URL
-
-```txt
-http://localhost:8888
-```
+# 🌐 Portas
+| Porta | Serviço          |
+| ----- | ---------------- |
+| 8787  | RStudio          |
+| 8888  | Jupyter          |
+| 7077  | Spark Master RPC |
+| 8080  | Spark Master UI  |
+| 8081  | Spark Worker UI  |
 
 ---
 
-# 🔐 Como Obter o Token do JupyterLab
-
-O JupyterLab gera um token automaticamente por segurança.
+# 🔗 Comunicação Docker
+Dentro da rede Docker:
+```
+rstudio
+   |
+   |
+spark://spark-master:7077
+   |
+   |
+spark-worker
+```
+Não usar:
+```
+spark://localhost:7077
+```
+porque localhost dentro do container aponta para o próprio container.
 
 ---
 
-## 📜 Método 1 — Via Logs do Container
-
-Execute:
-
-```bash
-docker logs estacio-dev-container
-```
-
-Procure por algo semelhante:
-
-```txt
-http://127.0.0.1:8888/lab?token=abc123456
-```
-
-ou:
-
-```txt
-http://0.0.0.0:8888/lab?token=abc123456
+# 📂 Volumes
+```mermaid
+flowchart LR
+HOST[💻 Host]
+WORK[📂 workspace]
+R[📊 /home/rstudio/workspace]
+SP[⚡ /workspace]
+HOST --> WORK
+WORK --> R
+WORK --> SP
 ```
 
 ---
 
-## 🐳 Método 2 — Dentro do Container
-
-Entrar no container:
-
-```bash
-docker exec -it estacio-dev-container bash
-```
-
-Listar servidores Jupyter ativos:
-
-```bash
-jupyter server list
-```
-
-ou:
-
-```bash
-jupyter lab list
-```
-
-Saída esperada:
-
-```txt
-http://localhost:8888/?token=abc123456
-```
-
----
-## 🚪 Método 3 de como Acessar o JupyterLab
-
-### Gerar URL Completa do JupyterLab com Token
-
-* 🔍 Comando
-
-```bash
-docker logs estacio-dev-container 2>&1 | grep -o 'http://127.0.0.1:8888/lab?token=[^ ]*'
-```
-
-Saída Esperada
-
-```txt
-http://127.0.0.1:8888/lab?token=abc123456789
+# 🗄️ Futuro: HDFS + Cassandra
+Arquitetura:
+```mermaid
+flowchart TD
+SPARK[⚡ Spark]
+NN[🗂️ NameNode]
+DN[💾 DataNode]
+CAS[🪨 Cassandra]
+SPARK --> NN
+NN --> DN
+SPARK --> CAS
 ```
 
 ---
 
-# 🔓 Remover Token do Jupyter (Somente Ambiente Local)
+# 📌 Componentes atuais
 
-> ⚠️ Recomendado apenas para ambiente local/desenvolvimento.
+✅ RStudio Server
+✅ JupyterLab
+✅ Python Virtual Environment
+✅ PySpark
+✅ Spark Master
+✅ Spark Worker
+✅ Docker Compose
+✅ VS Code DevContainer
 
-No `docker-compose.yml`:
-
-```yaml
-command: >
-  bash -c "
-    jupyter lab \
-      --ip=0.0.0.0 \
-      --port=8888 \
-      --no-browser \
-      --allow-root \
-      --ServerApp.token='' \
-      --ServerApp.password='' &
-    exec /init
-  "
-```
-
----
-
-## 🔄 Rebuild do Container
-
-```bash
-docker compose down
-docker compose up -d --build
-```
-
----
-
-## ✅ Acesso Sem Token
-
-```txt
-http://localhost:8888
-```
-
----
-
-# 🩺 Verificar Serviços em Execução
-
-## 📊 Verificar RStudio Server
-
-```bash
-docker exec -it estacio-dev-container bash -c "ps aux | grep rserver"
-
-
----
-
-## 📓 Verificar JupyterLab
-
-```bash
-docker exec -it estacio-dev-container bash -c "ps aux | grep jupyter"
-```
-
----
-
-# 🌐 Verificar Portas Publicadas
-
-```bash
-docker ps
-```
-
-Saída esperada:
-
-```txt
-0.0.0.0:8787->8787/tcp
-0.0.0.0:8888->8888/tcp
-```
-
----
-
-# 🔨 Rebuild Completo do Ambiente
-
-Após alterações no Dockerfile ou docker-compose:
-
-```bash
-docker compose down -v
-docker compose build --no-cache
-docker compose up -d
-```
-
----
-
-# 📁 Estrutura Recomendada
-
-```txt
-project/
-│
-├── .devcontainer/
-│   ├── devcontainer.json
-│   ├── docker-compose.yml
-│   └── Dockerfile
-│
-├── workspace/
-│
-└── README.md
-```
-
----
-
-# 🛠️ Stack Utilizada
-
-## 🐍 Python
-
-- JupyterLab
-- Pandas
-- NumPy
-- Matplotlib
-- Scikit-Learn
-- Polars
-- PyArrow
-
----
-
-## 📈 R
-
-- tidyverse
-- IRKernel
-- languageserver
-
----
-
-# 🐳 Comandos Úteis
-
-## ▶️ Subir Ambiente
-
-```bash
-docker compose up -d --build
-```
-
----
-
-## ⏹️ Parar Ambiente
-
-```bash
-docker compose down
-```
-
----
-
-## 🐚 Entrar no Container
-
-```bash
-docker exec -it estacio-dev-container bash
-```
-
----
-
-## 📜 Ver Logs
-
-```bash
-docker logs -f estacio-dev-container
-```
-
----
-
-# ✅ Ambiente Pronto
-
-Agora o ambiente possui:
-
-- 📊 RStudio Server
-- 📓 JupyterLab
-- 🐍 Python
-- 📈 R
-- 🐳 Docker
-- 💻 VSCode DevContainer
-- 🔬 Ambiente integrado para Data Science
+Próximas integrações:
+➡️ Hadoop HDFS
+➡️ Cassandra Connector
+➡️ Kafka
+➡️ Delta Lake
+➡️ Spark Streaming
