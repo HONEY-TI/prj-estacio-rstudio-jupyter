@@ -4,7 +4,7 @@
   "service": "rstudio",
   "remoteUser": "rstudio",
   "updateRemoteUserUID": true,
-  "workspaceFolder": "/workspace", 
+  "workspaceFolder": "/workspaces", 
   "mounts": [
     "source=${localWorkspaceFolder},target=/prj-workspace,type=bind"
   ],
@@ -12,7 +12,10 @@
     8787,
     8888,
     7077,
-    8081
+    8081, 
+    9870, 
+    9000, 
+    9864
   ],
   "customizations": {
     "vscode": {
