@@ -1,86 +1,11 @@
-FROM apache/spark:3.5.1 AS spark
-
-FROM rocker/rstudio:latest
-COPY --from=spark /opt/spark /opt/spark
-
-ENV DEBIAN_FRONTEND=noninteractive
+FROM alexfariakof/rstudio-dev-base:latest
 ENV USERNAME=rstudio
-ENV PATH="/opt/venv/bin:$PATH"
-ENV SPARK_HOME=/opt/spark
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="$SPARK_HOME/bin:$SPARK_HOME/sbin:/opt/venv/bin:$PATH"
-ENV PYSPARK_PYTHON=/opt/venv/bin/python
-ENV PYSPARK_DRIVER_PYTHON=/opt/venv/bin/python
-
-# ==========================================
-# Dependências do sistema (root — correto no build)
-# ==========================================
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    python3-venv \
-    git \
-    curl \
-    wget \
-    build-essential \
-    libssl-dev \
-    libcurl4-openssl-dev \
-    libxml2-dev \
-    libfontconfig1-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    libfreetype6-dev \
-    libpng-dev \
-    libtiff5-dev \
-    libjpeg-dev \
-    nano \
-    eza \
-    openjdk-17-jdk \
-    iputils-ping \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# ==========================================
-# Venv Python: criado como root, dono = rstudio
-# ==========================================
-RUN python3 -m venv /opt/venv \
-    && chown -R ${USERNAME}:${USERNAME} /opt/venv
-
-# ==========================================
-# Libs Python instaladas no venv
-# ==========================================
-RUN /opt/venv/bin/pip install --upgrade pip && \
-    /opt/venv/bin/pip install \
-    jupyterlab \
-    notebook \
-    pandas \
-    numpy \
-    matplotlib \
-    seaborn \
-    scikit-learn \
-    polars \
-    pyarrow \
-    jupyterlab-git \
-    plotly \
-    pyspark==3.5.1
-
-# ==========================================
-# Pacotes R (root)— tidyverse é o mais pesado (~15 min sem cache)
-# -----------------------------------------------------------------------------
-RUN R -e "install.packages( \
-        c('tidyverse', 'languageserver', 'IRkernel', 'sparklyr'), \
-        repos = 'https://cloud.r-project.org/', \
-        quiet = TRUE \
-    )" \
-    && R -e "IRkernel::installspec(user = FALSE)"
-
 # ==========================================
 # Permissões
 # ==========================================
 RUN mkdir -p /usr/local/share/jupyter/kernels \
     && chown -R ${USERNAME}:${USERNAME} /usr/local/share/jupyter \
-    && mkdir -p /home/${USERNAME}/workspace \
+    && mkdir -p /home/${USERNAME}/workspaces \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
 
 # -----------------------------------------------------------------------------
@@ -106,11 +31,21 @@ alias lt='eza --tree --level=2 --group'
 alias activate='source /opt/venv/bin/activate'
 alias deactivate='deactivate'
 
-ls() { command eza -la --group --group-directories-first "$@"; }
+function ls() { command eza -la --group --group-directories-first "$@"; }
 
-PS1='\[\e[0;32m\][\[\e[1;34m\]\u\[\e[0m\]:\[\e[1;36m\]\w\[\e[0m\]\[\e[1;33m\]$\[\e[0m\]\[\e[0;32m\]]\[\e[0m\]\$ '
+#=========================
+# Colorized Path with Branch
+# =========================
+
+function parse_git_branch() {
+    local branch
+    branch=$(git branch --show-current 2>/dev/null)
+    [ -n "$branch" ] && echo " ($branch)"
+}
+
+PS1='\[\e[0;32m\][\[\e[1;34m\]\u\[\e[0m\]:\[\e[1;36m\]\w\[\e[0m\]\[\e[1;33m\]$(parse_git_branch)\[\e[0m\]\[\e[0;32m\]]\[\e[0m\]\$'
+
 source /opt/venv/bin/activate
-
 EOF
 
 RUN cat > /home/${USERNAME}/.bash_profile <<'EOF'
@@ -126,6 +61,5 @@ COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
     && chown root:root /usr/local/bin/docker-entrypoint.sh
 
-WORKDIR /home/${USERNAME}/workspace
-
+WORKDIR /workspaces
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
