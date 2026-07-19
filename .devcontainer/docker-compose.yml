@@ -15,13 +15,12 @@ services:
       - "8787:8787" # http://localhost:8787/ user: rstudio password: toor
       - "8888:8888" # http://localhost:8888/
     volumes:
-      - ../workspace:/home/rstudio/workspace:cached
-      - ../workspace:/workspace
+      - ../workspaces:/home/rstudio/workspaces:cached
       - vscode-extensions:/.vscode/extensions:/rstudio/.vscode-server/extensions
     restart: unless-stopped
     command: ["/usr/local/bin/docker-entrypoint.sh"]    
     networks:
-      - spark-network    
+      - app-network    
     depends_on:
       spark-master:
         condition: service_started #ping -c 4 spark-master
@@ -47,14 +46,14 @@ services:
       - "7077:7077"
       - "8080:8080"
     volumes:
-      - ../workspace:/workspace
+      - ../workspaces:/workspaces
     command: >
         /opt/spark/bin/spark-class
         org.apache.spark.deploy.master.Master
     mem_limit: 2g
     cpus: 2
     networks:
-      - spark-network
+      - app-network
     logging:
       driver: json-file
       options:
@@ -76,13 +75,13 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - ../workspace:/workspace
+      - ../workspaces:/workspaces
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.worker.Worker
       spark://spark-master:7077
     networks:
-      - spark-network      
+      - app-network      
     depends_on:
       spark-master:
         condition: service_started #ping -c 4 spark-master
@@ -92,9 +91,48 @@ services:
         max-size: "2m"
         max-file: "1"
 
+  namenode:
+    image: apache/hadoop:3
+    container_name: namenode
+    hostname: namenode
+    command: sleep infinity
+    environment:
+      HDFS_NAMENODE_USER: rstudio
+      HDFS_DATANODE_USER: rstudio
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    networks:
+      - app-network
+    volumes:
+      - namenode-data:/data
+      - ./hadoop-config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop-config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+
+  datanode:
+    image: apache/hadoop:3
+    container_name: datanode
+    hostname: datanode
+    command: sleep infinity
+    depends_on:
+      - namenode
+    environment:
+      HDFS_NAMENODE_USER: rstudio
+      HDFS_DATANODE_USER: rstudio
+    ports:
+      - "9864:9864"
+    networks:
+      - app-network
+    volumes:
+      - datanode-data:/data
+      - ./hadoop-config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop-config/hdfs-site.xml:/opt/hadooclsp/etc/hadoop/hdfs-site.xml:ro
+
 volumes:
   vscode-extensions:
+  namenode-data:
+  datanode-data:
 
 networks:
-  spark-network:
+  app-network:
     driver: bridge  
