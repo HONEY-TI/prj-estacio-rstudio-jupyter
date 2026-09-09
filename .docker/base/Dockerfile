@@ -14,31 +14,12 @@ ENV PYSPARK_DRIVER_PYTHON=/opt/venv/bin/python
 # ==========================================
 # Dependências do sistema (root — correto no build)
 # ==========================================
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
-    git \
-    curl \
-    wget \
-    build-essential \
-    libssl-dev \
-    libcurl4-openssl-dev \
-    libxml2-dev \
-    libfontconfig1-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    libfreetype6-dev \
-    libpng-dev \
-    libtiff5-dev \
-    libjpeg-dev \
-    nano \
-    eza \
     openjdk-17-jdk \
-    iputils-ping \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -49,32 +30,18 @@ RUN python3 -m venv /opt/venv \
     && chown -R ${USERNAME}:${USERNAME} /opt/venv
 
 # ==========================================
-# Libs Python instaladas no venv
+# Libs Python essenciais
 # ==========================================
-RUN --mount=type=cache,target=/root/.cache/pip \
-    /opt/venv/bin/pip install --upgrade pip && \
+RUN /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install \
     jupyterlab \
-    notebook \
     ipykernel \
     pandas \
     numpy \
     matplotlib \
-    seaborn \
-    scikit-learn \
-    polars \
     pyarrow \
-    jupyterlab-git \
-    plotly \
-    mrjob \
-    black \
-    flake8 \
-    pytest \
     pyspark==3.5.1
 
-# ==========================================
-# Pacotes R (root)— tidyverse é o mais pesado (~15 min sem cache)
-# -----------------------------------------------------------------------------
 RUN R -e "install.packages( \
         c('tidyverse', 'languageserver', 'IRkernel', 'sparklyr'), \
         repos = 'https://cloud.r-project.org/', \
