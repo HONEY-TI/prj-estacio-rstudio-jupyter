@@ -1,0 +1,12 @@
+networks:
+  app-network:
+    name: app-network
+    external: true
+
+volumes:
+  vscode-extensions:
+    name: vscode-extensions
+  namenode-data:
+    name: namenode-data
+  datanode-data:
+    name: datanode-data
