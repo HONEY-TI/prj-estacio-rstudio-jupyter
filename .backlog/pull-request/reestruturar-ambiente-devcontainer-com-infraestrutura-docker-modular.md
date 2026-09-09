@@ -5,7 +5,7 @@ title: "PR(#1)-Reestruturar ambiente DevContainer com infraestrutura Docker modu
 branch: feature/reestruturar-ambiente-devcontainer-com-infraestrutura-docker-modular
 base: main
 extends: feature-01-reestruturar-ambiente-devcontainer-com-infraestrutura-docker-modular
-status: open
+status: merged
 ---
 
 ## 📋 Descrição
