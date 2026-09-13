@@ -1,8 +1,6 @@
 FROM apache/spark:3.5.1 AS spark
 FROM rocker/rstudio:latest
 COPY --from=spark /opt/spark /opt/spark
-
-ENV DEBIAN_FRONTEND=noninteractive
 ENV USERNAME=rstudio
 ENV PATH="/opt/venv/bin:$PATH"
 ENV SPARK_HOME=/opt/spark
@@ -14,12 +12,12 @@ ENV PYSPARK_DRIVER_PYTHON=/opt/venv/bin/python
 # ==========================================
 # Dependências do sistema (root — correto no build)
 # ==========================================
-RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
-    openjdk-17-jdk \
+    openjdk-17-jre-headless \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

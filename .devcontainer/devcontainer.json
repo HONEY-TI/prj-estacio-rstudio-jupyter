@@ -7,9 +7,8 @@
   "updateRemoteUserUID": true,
   "postStartCommand": "sudo /usr/local/bin/setup-codex.sh",
   "mounts": [
-    "type=volume,target=/home/rstudio/.vscode-server",
     "source=${localWorkspaceFolder},target=/workspaces,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh,type=bind"
+    "source=${localEnv:HOME}/.ssh,target=/home/rstudio/.ssh,type=bind"
   ],
   "forwardPorts": [
     8787,

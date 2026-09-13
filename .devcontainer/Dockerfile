@@ -1,11 +1,19 @@
 FROM alexfariakof/rstudio-dev-base:latest
-
+USER root
 RUN apt-get update && apt-get install -y \
     openssh-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ENV USERNAME=rstudio
+ARG USERNAME=rstudio
+RUN mkdir -p /home/node/.vscode-server \
+    && chown -R rstudio:rstudio /home/node/.vscode-server \
+    && chmod 750 /home/node/.vscode-server
+# SSH
+# =============================================================================
+RUN mkdir -p /home/rstudio/.ssh \
+    && chown -R rstudio:rstudio /home/rstudio/.ssh \
+    && chmod 700 /home/rstudio/.ssh
 
 COPY requirements.txt /tmp/requirements.txt
 RUN /opt/venv/bin/pip install --upgrade pip \
@@ -19,7 +27,7 @@ COPY setup-codex.sh /usr/local/bin/setup-codex.sh
 RUN chmod +x /usr/local/bin/setup-codex.sh \
     && chown root:root /usr/local/bin/setup-codex.sh
     
-RUN echo "${USERNAME} ALL=(root) NOPASSWD: /usr/local/bin/setup-codex.sh, /usr/local/bin/docker-entrypoint.sh" \
+RUN echo "rstudio ALL=(root) NOPASSWD: /usr/local/bin/setup-codex.sh, /usr/local/bin/docker-entrypoint.sh" \
     > /etc/sudoers.d/${USERNAME}-dev \
     && chmod 0440 /etc/sudoers.d/${USERNAME}-dev \
     && visudo -cf /etc/sudoers.d/${USERNAME}-dev
