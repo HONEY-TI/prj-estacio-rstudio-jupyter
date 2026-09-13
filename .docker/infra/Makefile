@@ -1,113 +1,78 @@
-NETWORK := app-network
+# =========================================================================
+# Docker Compospe Test - Makefile
+# =========================================================================
+SHELL := /bin/bash
 
-.PHONY: infra-up infra-down infra-status \
-        network volumes \
-        spark-master spark-worker namenode datanode
+COMPOSE       := docker compose
+CONTAINER_INFRA := docker-compose.yml
+DATANODE_COMPOSE := datanode/docker-compose.yml
+NAMENODE_COMPOSE := namenode/docker-compose.yml
+SPARKMASTER_COMPOSE := spark-master/docker-compose.yml
+SPARKWORKER_COMPOSE := spark-worker/docker-compose.yml
 
-# ============================================================
-# Recursos compartilhados
-# ============================================================
+ROOT_COMPOSE  := ../docker-compose.yml
 
-network:
-	@docker network inspect $(NETWORK) >/dev/null 2>&1 || \
-		( echo "Criando network $(NETWORK)..."; \
-		  docker network create $(NETWORK) )
+DEV_CONTAINER_NAME  := rstudio-dev-base
+NODE_VOLUMES  :=  datanode-data namenode-data
 
-volumes:
-	@docker volume inspect namenode-data >/dev/null 2>&1 || \
-		( echo "Criando volume namenode-data..."; \
-		  docker volume create namenode-data )
-
-	@docker volume inspect datanode-data >/dev/null 2>&1 || \
-		( echo "Criando volume datanode-data..."; \
-		  docker volume create datanode-data )
-	
-	@docker volume inspect vscode-extensions >/dev/null 2>&1 || \
-		( echo "Criando volume vscode-extensions..."; \
-		  docker volume create vscode-extensions )
-		  
-# ============================================================
-# Servidores
-# ============================================================
-
-spark-master: network
-	docker compose -f spark-master/docker-compose.yml up -d
-
-spark-worker: network
-	docker compose -f spark-worker/docker-compose.yml up -d
-
-namenode: network volumes
-	docker compose -f namenode/docker-compose.yml up -d
-
-datanode: network volumes
-	docker compose -f datanode/docker-compose.yml up -d
+PHONY: infra-up infra-down clean-devcontainer rebuild-devcontainer
 
 # ============================================================
 # Infraestrutura completa
 # ============================================================
+infra: ## Cria network + volumes (profile init), sem iniciar containers de app
+	$(COMPOSE) -f $(CONTAINER_INFRA) --profile init up --no-start
+	@echo "✔ Rede e volumes prontos."
 
-infra-up: network volumes
-	docker compose -f namenode/docker-compose.yml up -d
+up: infra datanode namenode spark-master spark-worker down
+	-$(COMPOSE) -f namenode/docker-compose.yml up -d --build 
 	@echo "Aguardando NameNode ficar saudável..."
 	@until [ "$$(docker inspect -f '{{.State.Health.Status}}' namenode 2>/dev/null)" = "healthy" ]; do \
 		sleep 2; \
 	done
 	@echo "NameNode saudável."
 
-	docker compose -f datanode/docker-compose.yml up -d
+	-$(COMPOSE) -f datanode/docker-compose.yml up -d --build 
 	@echo "Aguardando DataNode ficar saudável..."
 	@until [ "$$(docker inspect -f '{{.State.Health.Status}}' datanode 2>/dev/null)" = "healthy" ]; do \
 		sleep 2; \
 	done
 	@echo "DataNode saudável."
-	
-	docker compose -f spark-master/docker-compose.yml up -d
+
+	-$(COMPOSE) -f spark-master/docker-compose.yml up -d --build 
 	@echo "Aguardando Spark Master ficar saudável..."
 	@until [ "$$(docker inspect -f '{{.State.Health.Status}}' spark-master 2>/dev/null)" = "healthy" ]; do \
 		sleep 2; \
 	done
 	@echo "Spark Master saudável."
 
-	docker compose -f spark-worker/docker-compose.yml up -d
-		@echo "Aguardando Spark Worker ficar saudável..."
+	-$(COMPOSE) -f spark-worker/docker-compose.yml up -d  --build 
+	@echo "Aguardando Spark Worker ficar saudável..."
 	@until [ "$$(docker inspect -f '{{.State.Health.Status}}' spark-worker 2>/dev/null)" = "healthy" ]; do \
 		sleep 2; \
 	done
 	@echo "Spark Worker saudável."
 
+	-$(COMPOSE) -f $(ROOT_COMPOSE) build
+
 	@echo ""
 	@echo "Infraestrutura compartilhada pronta."
-	@exit 0
-# ============================================================
-# Status
-# ============================================================
 
-infra-status:
-	@echo "=== CONTAINERS ==="
-	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-	@echo ""
-	@echo "=== NETWORK ==="
-	@docker network inspect $(NETWORK) \
-		--format '{{.Name}}' 2>/dev/null || \
-		echo "$(NETWORK) não existe"
+down: prune-volumes
+	-$(COMPOSE) -f spark-worker/docker-compose.yml down
+	-$(COMPOSE) -f spark-master/docker-compose.yml down
+	-$(COMPOSE) -f datanode/docker-compose.yml down
+	-$(COMPOSE) -f namenode/docker-compose.yml down
 
-	@echo ""
-	@echo "=== VOLUMES ==="
-	@docker volume inspect namenode-data \
-		--format '{{.Name}}' 2>/dev/null || \
-		echo "namenode-data não existe"
-
-	@docker volume inspect datanode-data \
-		--format '{{.Name}}' 2>/dev/null || \
-		echo "datanode-data não existe"
-
-# ============================================================
-# Parar servidores
-# ============================================================
-
-infra-down:
-	docker compose -f spark-worker/docker-compose.yml down
-	docker compose -f spark-master/docker-compose.yml down
-	docker compose -f datanode/docker-compose.yml down
-	docker compose -f namenode/docker-compose.yml down
+prune-volumes:
+	@echo "Parando e removendo containers..."
+	-docker rm --force rs-network-init
+	-docker rm --force rs-dev-volumes-init
+	-docker rm --force rs-infra
+	-$(COMPOSE) -f $(ROOT_COMPOSE) down
+	-docker rm --force $(DEV_CONTAINER_NAME) 2>/dev/null
+	-docker ps -aq --filter "name=persona" | xargs -r docker rm --force
+	@echo "Removendo volumes..."
+	-yes | docker volume prune
+	@echo "Limpeza concluída."

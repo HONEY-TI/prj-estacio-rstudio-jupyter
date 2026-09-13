@@ -47,7 +47,7 @@ main() {
 
   log "Fora do container — rodando 'make infra-up' em ${MAKE_INFRA_DIR}"
 
-  make -C "$MAKE_INFRA_DIR" infra-up
+  make -C "$MAKE_INFRA_DIR" up
 }
 
 main "$@"
