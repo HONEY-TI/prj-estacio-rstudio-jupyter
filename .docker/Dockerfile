@@ -22,9 +22,15 @@ RUN apt-get update \
     curl \
     build-essential \
     nano \
-    eza \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# ── eza (ls moderno) ────────────────────────────────────────────────────────
+ARG EZA_VERSION=0.23.4
+RUN curl -fsSL \
+        "https://github.com/eza-community/eza/releases/download/v${EZA_VERSION}/eza_x86_64-unknown-linux-musl.tar.gz" \
+        | tar -xzf - -C /usr/local/bin \
+    && chmod +x /usr/local/bin/eza
 
 # =============================================================================
 # Node.js + npm + Codex
@@ -54,57 +60,73 @@ export PYSPARK_DRIVER_PYTHON="${VIRTUAL_ENV}/bin/python"
 
 export PATH="${VIRTUAL_ENV}/bin:${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${HOME}/.npm-global/bin:/usr/local/bin:${PATH}"
 
-# Virtualenv
-if [ -f "${VIRTUAL_ENV}/bin/activate" ]; then
-    source "${VIRTUAL_ENV}/bin/activate"
-fi
+# =========================================================
+# ALIASES
+# =========================================================
 
-# Aliases
 alias cls='clear'
-alias py='python3'
-alias ll='eza -l -h --group '
-alias la='eza -la -h --group '
-alias lt='eza --tree --level=2 --group'
+alias ll='eza -l -h --group --group-directories-first'
+alias la='eza -la -hs --group --group-directories-first'
+alias lt='eza --tree --level=2 --group --group-directories-first'
 
-ls() {
-    command eza -la --group-directories-first "$@"
+function ls() {
+    command eza \
+        -la \
+        -h \
+        --group \
+        --group-directories-first \
+        --color=always \
+        "$@"
 }
 
-# Git
+function lsh() {
+    local dir="${1:-.}"
+
+    command eza \
+        -la \
+        -h \
+        --group \
+        --group-directories-first \
+        --sort=size \
+        --color=always \
+        "$dir"
+}
+# ==========================================
+# VENV + GIT BRANCH NO PROMPT
+# ==========================================
+
 parse_git_branch() {
     local branch
     branch=$(git branch --show-current 2>/dev/null)
+
     [ -n "$branch" ] && printf " (%s)" "$branch"
 }
 
-# Prompt
 set_venv_prompt() {
-    local venv_name=""
+
+    local venv_prompt=""
 
     if [ -n "${VIRTUAL_ENV:-}" ]; then
-        venv_name="(venv) "
+        venv_prompt='\[\e[1;31m\](venv)\[\e[0m\] '
     fi
 
-    PS1='\[\e[1;34m\]┌── \[\e[1;32m\]'"${venv_name}"'\[\e[0m\](\[\e[1;31m\]\u\[\e[0m\]㉿\[\e[1;36m\]\h\[\e[0m\])-\[\e[1;34m\][\[\e[1;32m\]\w\[\e[0m\]\[\e[1;33m\]$(parse_git_branch)\[\e[0m\]\[\e[1;34m\]]\[\e[0m\]\n\[\e[1;34m\]└─\[\e[0m\]\$ '
+    PS1='\[\e[1;32m\]┌──\[\e[0m\] '"${venv_prompt}"\
+'\[\e[0;37m\](\[\e[1;34m\]\u\[\e[0;37m\]㉿\[\e[1;32m\]\h\[\e[0;37m\])\[\e[0m\]-'\
+'\[\e[0;37m\][\w\[\e[1;33m\]$(parse_git_branch)\[\e[0;37m\]]\[\e[0m\]'\
+'\n'\
+'\[\e[1;32m\]└─\[\e[0m\]\$ '
 }
 
-activate() {
-    local venv="${1:-$VIRTUAL_ENV}"
+activate_venv() {
+    local venv="${1:-/home/jail/opt/venv}"
 
     if [ ! -f "$venv/bin/activate" ]; then
         echo "Erro: virtualenv não encontrado em: $venv"
         return 1
     fi
 
+    export VIRTUAL_ENV_DISABLE_PROMPT=1
     source "$venv/bin/activate"
-    set_venv_prompt
-}
-
-deactivate_venv() {
-    if type deactivate &>/dev/null; then
-        deactivate
-    fi
-
     set_venv_prompt
 }
 
