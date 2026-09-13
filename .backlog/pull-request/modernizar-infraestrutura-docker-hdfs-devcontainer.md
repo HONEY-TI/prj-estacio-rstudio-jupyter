@@ -5,7 +5,7 @@ title: "PR(#2)-Modernizar Infraestrutura Docker com HDFS e DevContainer"
 branch: feature/modernizar-infraestrutura-docker-hdfs-devcontainer
 base: main
 extends: feature-02-modernizar-infraestrutura-docker-hdfs-devcontainer
-status: open
+status: merged
 ---
 
 ## 📋 Descrição
