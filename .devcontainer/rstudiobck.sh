@@ -130,7 +130,7 @@ if [ "${AUTO_SWITCHED}" != "1" ]; then
     export AUTO_SWITCHED=1
     exec su - rstudio
 fi
-SWITCHEOF
+SWITCHEOFdsp
 
 RUN echo 'source /root/.switch_user' >> /root/.bashrc     && \
     echo 'source /root/.switch_user' >> /root/.bash_profile && \

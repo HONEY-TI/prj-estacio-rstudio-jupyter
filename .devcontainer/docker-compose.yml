@@ -12,7 +12,6 @@ services:
       - "8888:8888" # http://localhost:8888/
     volumes:
       - ..:/workspaces:cached
-      - vscode-extensions:/home/node/.vscode-server/extensions      
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -23,17 +22,14 @@ services:
     restart: unless-stopped
     #entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]    
     networks:
-      - app-network    
+      - rs-network    
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "1"
-volumes:
-  vscode-extensions:
-    external: true
     
 networks:
-  app-network:
+  rs-network:
     external: true
 
