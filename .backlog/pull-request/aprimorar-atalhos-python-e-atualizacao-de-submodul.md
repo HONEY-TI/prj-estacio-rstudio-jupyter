@@ -31,7 +31,7 @@ Feature relacionada: `.backlog/features/feature-03-aprimorar-atalhos-python-e-at
   - Commits: 3 commits publicados na referência atualizada
   - Arquivos alterados: atualização do gitlink para incluir as melhorias da PR externa
 - **repositório pai** — branch `feature/aprimorar-atalhos-python-e-atualizacao-de-submodul`
-  - Commits: 7 commits de conteúdo
+  - Commits: 8 commits de conteúdo
   - Arquivos alterados: Dockerfile, task e script do VS Code, documentação de feature/PR e gitlink do `.ai`
 
 ---
@@ -46,6 +46,8 @@ Feature relacionada: `.backlog/features/feature-03-aprimorar-atalhos-python-e-at
 
 ## 📝 feature Commits
 
+- **docs(backlog): corrigir contagem de commits da PR**
+  > _17/09/2026 20:15_
 - **docs(backlog): sincronizar estatísticas da PR**
   > _17/09/2026 20:14_
 - **docs(backlog): atualizar estatísticas da PR**
