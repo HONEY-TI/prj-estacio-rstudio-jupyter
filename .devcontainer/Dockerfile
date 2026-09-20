@@ -45,6 +45,30 @@ RUN if [ -n "$GITHUB_TOKEN" ]; then \
 
 RUN git config --global user.name "Alex Ribeiro de Faria" \
     && git config --global user.email "135660435+alexribeirofaria@github.com"
- 
+
+
+# =============================================================================
+# 🔄 AUTO SWITCH — ROOT ➜ RSTUDIO
+# =============================================================================
+# 📌 false = DESATIVADO | true = ATIVADO
+# =============================================================================
+
+ARG ENABLE_SWITCH_USER=true
+
+RUN if [ "$ENABLE_SWITCH_USER" = "true" ]; then \
+        echo "🔄 Configurando auto switch: root ➜ rstudio"; \
+        printf '%s\n' \
+            'if [ "${AUTO_SWITCHED}" != "1" ]; then' \
+            '    export AUTO_SWITCHED=1' \
+            '    exec su - rstudio' \
+            'fi' \
+            > /root/.switch_user; \
+        echo "source /root/.switch_user" >> /root/.bashrc; \
+        echo "source /root/.switch_user" >> /root/.bash_profile; \
+        echo ". /root/.switch_user" >> /root/.profile; \
+    else \
+        echo "⏭️  Auto switch root ➜ rstudio: DESATIVADO"; \
+    fi
+
 WORKDIR /workspaces
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
