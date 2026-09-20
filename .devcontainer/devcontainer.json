@@ -4,8 +4,8 @@
   "service": "rstudio-devcontainer",
   "remoteUser": "rstudio",
   "workspaceFolder": "/workspaces", 
-  "updateRemoteUserUID": true,
-  "postStartCommand": "sudo /usr/local/bin/setup-codex.sh",
+  "updateRemoteUserUID": false,
+  "postStartCommand": "sudo /usr/local/bin/setup-codex.sh && codex",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspaces,type=bind",
     "source=${localEnv:HOME}/.ssh,target=/home/rstudio/.ssh,type=bind"

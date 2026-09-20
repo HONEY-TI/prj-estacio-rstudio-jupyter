@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: rstudio-devcontainer
     container_name: rstudio-devcontaier # docker exec -it rstudio-devcontaier bash
     environment:
       PASSWORD: "toor"
