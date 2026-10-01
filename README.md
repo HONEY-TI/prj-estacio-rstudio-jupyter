@@ -255,3 +255,7 @@ Próximas integrações:
 ➡️ Kafka
 ➡️ Delta Lake
 ➡️ Spark Streaming
+
+## ⚖️ Licença
+
+Consulte o arquivo de [`Licença`](LICENSE). Antes de publicar ou redistribuir, revise os termos aplicaveis e garanta que eles estejam consistentes com a intencao juridica do projeto.
