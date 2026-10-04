@@ -22,9 +22,9 @@ Feature relacionada: `feature-05-reestruturar-infraestrutura-docker-e-padronizar
 | --- | --- |
 | 🌿 Branch de origem | `feature/reestruturar-infraestrutura-docker-e-padronizar-de` |
 | 🎯 Branch de destino | `main` |
-| 📝 Total de commits de conteúdo | 32 |
-| 📁 Arquivos alterados | 31 |
-| ➕ Linhas adicionadas | 2096 |
+| 📝 Total de commits de conteúdo | 34 |
+| 📁 Arquivos alterados | 32 |
+| ➕ Linhas adicionadas | 2178 |
 | ➖ Linhas removidas | 721 |
 
 ## 📦 Repositórios/branches atualizados
@@ -34,8 +34,8 @@ Feature relacionada: `feature-05-reestruturar-infraestrutura-docker-e-padronizar
   - Arquivos alterados: 2 — ajuste de detecção de ambiente e regras de arquivos locais
   - Commit publicado: `22eef78`
 - **repositório pai** — branch `feature/reestruturar-infraestrutura-docker-e-padronizar-de`
-  - Commits: 32 (excluindo o commit inicial vazio)
-  - Arquivos alterados: 31 — Dev Container, Docker, VS Code, documentação de feature, `.gitmodules`, `.gitignore` e gitlink do `.docker-infra`
+  - Commits: 34 (excluindo o commit inicial vazio)
+  - Arquivos alterados: 32 — Dev Container, Docker, VS Code, documentação da feature e da PR, `.gitmodules`, `.gitignore` e gitlink do `.docker-infra`
 - **`.ai`** — não atualizado; mantido no commit de referência `db6c9fd`
 
 ## Checklist
@@ -80,3 +80,4 @@ Feature relacionada: `feature-05-reestruturar-infraestrutura-docker-e-padronizar
 - fix(devcontainer.json): atualizar configuração `.devcontainer/devcontainer.json` - [9a2087b](https://github.com/HONEY-TI/prj-estacio-rstudio-jupyter/commit/9a2087b7ffd1e024f9dd98e637a6bc167c9eadc9)
 - fix(Dockerfile): atualizar imagem do Dev Container `.devcontainer/Dockerfile` - [6127121](https://github.com/HONEY-TI/prj-estacio-rstudio-jupyter/commit/612712175aefff4af9e5d4f70aeebc542dbb9203)
 - feat(feature-05): adicionar documentação da feature `.backlog/features/feature-05-reestruturar-infraestrutura-docker-e-padronizar-de.md` - [84d8e71](https://github.com/HONEY-TI/prj-estacio-rstudio-jupyter/commit/84d8e71f943265e1eabbcd75fd2321947d1be133)
+- docs(backlog): documentar PR da infraestrutura `.backlog/pull-request/reestruturar-infraestrutura-docker-e-padronizar-de.md` - [dd6f625](https://github.com/HONEY-TI/prj-estacio-rstudio-jupyter/commit/dd6f625)
