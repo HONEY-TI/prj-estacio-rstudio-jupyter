@@ -5,7 +5,7 @@ title: "PR(#5)-Reestruturar infraestrutura Docker e padronizar Dev Container"
 branch: feature/reestruturar-infraestrutura-docker-e-padronizar-de
 base: main
 extends: feature-05-reestruturar-infraestrutura-docker-e-padronizar-de
-status: open
+status: merged
 ---
 
 ## 📋 Descrição
