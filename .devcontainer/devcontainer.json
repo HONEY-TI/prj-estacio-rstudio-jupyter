@@ -3,30 +3,32 @@
   "dockerComposeFile": ["docker-compose.yml"],
   "service": "rstudio-devcontainer",
   "remoteUser": "rstudio",
-  "workspaceFolder": "/workspaces", 
   "updateRemoteUserUID": false,
-  "postStartCommand": "sudo /usr/local/bin/setup-codex.sh && codex",
+  "overrideCommand": false,
+  "workspaceFolder": "/workspace",
+  "initializeCommand": "f=$(ls -t \"${XDG_RUNTIME_DIR}\"/.mutter-Xwaylandauth.* 2>/dev/null | head -n1); if [ -n \"$f\" ]; then cp \"$f\" .devcontainer/.xauth-devc; else : > .xauth-devc; fi",
+  "postCreateCommand": "bash setup-codex.sh",
+  "shutdownAction": "stopCompose",
+  "containerEnv": {
+    "IN_DEVCONTAINER": "true",
+    "DISPLAY": ":0",
+    "XAUTHORITY": "/tmp/.xauth-devc",
+    "CODEX_HOME": "/workspace/.codex"
+  },
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspaces,type=bind",
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+    "source=${localWorkspaceFolder}/.devcontainer/.xauth-devc,target=/tmp/.xauth-devc,type=bind,readonly",
+    "source=vscode-server-rstudio,target=/home/rstudio/.vscode-server,type=volume",
     "source=${localEnv:HOME}/.ssh,target=/home/rstudio/.ssh,type=bind"
   ],
-  "forwardPorts": [
-    8787,
-    8888,
-    7077,
-    8081, 
-    9870, 
-    9000, 
-    9864
-  ],
+  "forwardPorts": [8787, 8888, 7077, 8081, 9870, 9000, 9864, 1455],
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-toolsai.jupyter",
         "reditorsupport.r-syntax",
-        "reditorsupport.r-syntax@0.1.4",
-        "mikhail-arkhipov.r@0.0.32",
+        "mikhail-arkhipov.r",
         "reditorsupport.r@2.8.8",
         "ms-python.debugpy",
         "ms-python.vscode-pylance",
@@ -38,7 +40,6 @@
         "frhtylcn.pythonsnippets",
         "ericsia.pythonsnippets3",
         "mgesbert.python-path",
-        "mikhail-arkhipov.r",
         "mathematic.vscode-pdf@0.2.1",
         "arturock.gitstash@6.13.0",
         "openai.chatgpt@26.825.51511"

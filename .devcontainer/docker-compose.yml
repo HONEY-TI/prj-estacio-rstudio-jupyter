@@ -1,18 +1,25 @@
 services:
   rstudio-devcontainer:
     build:
-      context: .
-      dockerfile: Dockerfile
-    image: rstudio-devcontainer
-    container_name: rstudio-devcontaier # docker exec -it rstudio-devcontaier bash
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        ENABLE_SWITCH_USER: "true"
+        USERNAME: rstudio
+    container_name: rstudio-devcontainer
+    image: alexfariakof/rstudio-dev-base:latest
     environment:
       PASSWORD: "toor"
+      JUPYTER_TOKEN: "toor"
       GITHUB_TOKEN: ${GITHUB_TOKEN}
+      SPARK_MASTER: spark://spark-master:7077
     ports:
-      - "8787:8787" # http://localhost:8787/ user: rstudio password: toor
-      - "8888:8888" # http://localhost:8888/
+      - "8787:8787"
+      - "8888:8888"
     volumes:
-      - ..:/workspaces:cached
+      - ..:/workspace:cached
+      - ../.codex:/home/rstudio/.codex
+      - vscode-extensions-shared:/home/rstudio/.vscode-server/extensions:rw
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -21,16 +28,25 @@ services:
       - apparmor=unconfined
       - seccomp:unconfined
     restart: unless-stopped
-    #entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]    
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:9864/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    stdin_open: true
+    tty: true
     networks:
-      - rs-network    
+      - rs-network
     logging:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "1"
-    
+
+volumes:
+  vscode-extensions-shared:
+    external: true
+
 networks:
   rs-network:
     external: true
-
