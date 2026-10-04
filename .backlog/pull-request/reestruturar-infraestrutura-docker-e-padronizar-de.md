@@ -5,7 +5,7 @@ title: "PR(#5)-Reestruturar infraestrutura Docker e padronizar Dev Container"
 branch: feature/reestruturar-infraestrutura-docker-e-padronizar-de
 base: main
 extends: feature-05-reestruturar-infraestrutura-docker-e-padronizar-de
-status: draft
+status: open
 ---
 
 ## 📋 Descrição
@@ -22,7 +22,7 @@ Feature relacionada: `feature-05-reestruturar-infraestrutura-docker-e-padronizar
 | --- | --- |
 | 🌿 Branch de origem | `feature/reestruturar-infraestrutura-docker-e-padronizar-de` |
 | 🎯 Branch de destino | `main` |
-| 📝 Total de commits de conteúdo | 34 |
+| 📝 Total de commits de conteúdo | 35 |
 | 📁 Arquivos alterados | 32 |
 | ➕ Linhas adicionadas | 2178 |
 | ➖ Linhas removidas | 721 |
@@ -34,7 +34,7 @@ Feature relacionada: `feature-05-reestruturar-infraestrutura-docker-e-padronizar
   - Arquivos alterados: 2 — ajuste de detecção de ambiente e regras de arquivos locais
   - Commit publicado: `22eef78`
 - **repositório pai** — branch `feature/reestruturar-infraestrutura-docker-e-padronizar-de`
-  - Commits: 34 (excluindo o commit inicial vazio)
+  - Commits: 35 (excluindo o commit inicial vazio)
   - Arquivos alterados: 32 — Dev Container, Docker, VS Code, documentação da feature e da PR, `.gitmodules`, `.gitignore` e gitlink do `.docker-infra`
 - **`.ai`** — não atualizado; mantido no commit de referência `db6c9fd`
 
