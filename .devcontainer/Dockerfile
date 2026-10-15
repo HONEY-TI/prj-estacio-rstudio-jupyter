@@ -3,7 +3,6 @@ ARG USERNAME=rstudio
 ENV USERNAME=${USERNAME}
 ARG WORKSPACE=/workspace
 ENV WORKSPACE=${WORKSPACE}
-ENV DEBIAN_FRONTEND=noninteractive
 
 # ==========================================
 # Dependências do sistema
@@ -35,12 +34,19 @@ RUN apt-get update \
 # =============================================================================
 COPY .devcontainer/requirements.in /usr/local/share/requirements.in
 
-RUN /opt/venv/bin/python -m pip install --no-cache-dir --upgrade pip \
-    && /opt/venv/bin/python -m pip install --no-cache-dir \
-        -r /usr/local/share/requirements.in \
-    && chown -R rstudio:rstudio /opt/venv \
-    && rm -f /usr/local/share/requirements.in
-
+RUN set -e; \
+    PIP="/opt/venv/bin/python -m pip"; \
+    OUT="$($PIP install --dry-run --no-cache-dir -r /usr/local/share/requirements.in 2>&1)"; \
+    case "$OUT" in \
+        *"Would install"*) \
+            echo "Pacotes ausentes ou desatualizados:"; \
+            echo "$OUT" | grep "Would install"; \
+            $PIP install --no-cache-dir -r /usr/local/share/requirements.in; \
+            chown -R ${USERNAME}:${USERNAME} /opt/venv ;; \
+        *) echo "Requirements já satisfeitos, nada a instalar." ;; \
+    esac; \
+    rm -f /usr/local/share/requirements.in
+    
 # =============================================================================
 # Instalação codex cli
 # =============================================================================
@@ -62,9 +68,9 @@ RUN mkdir -p /home/${USERNAME}/.vscode-server  \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.vscode-server  \
     && chmod 770 /home/${USERNAME}/.vscode-server 
 
-COPY .ai/tools/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod 700 /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY .ai/tools/rstudio-entrypoint.sh /usr/local/sbin/docker-entrypoint.sh
+RUN chmod 700 /usr/local/sbin/docker-entrypoint.sh
+RUN chmod +x /usr/local/sbin/docker-entrypoint.sh
 
 COPY .ai/setup-codex-any-user.sh /usr/local/sbin/setup-codex.sh
 COPY .ai/tools/post-start.sh /usr/local/sbin/post-start.sh
@@ -88,5 +94,7 @@ RUN echo "${USERNAME} ALL=(root) NOPASSWD: \
 
 RUN chsh -s /bin/zsh 2>/dev/null || true;
 
+USER root
 WORKDIR ${WORKSPACE}
 ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["/init"]
