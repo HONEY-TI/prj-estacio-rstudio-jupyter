@@ -1,0 +1,6 @@
+services:
+  r-packages:
+    image: alexfariakof/r-packages:latest
+    build:
+      context: .
+      dockerfile: Dockerfile

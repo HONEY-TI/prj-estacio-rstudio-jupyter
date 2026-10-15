@@ -1,16 +1,21 @@
 #docker run --rm -it alexfariakof/rstudio-base:latest bash
 services:
   rstudio-base:
+    image: alexfariakof/rstudio-base:latest
     build:
       context: .
       dockerfile: Dockerfile
-    image: alexfariakof/rstudio-base:latest
-    container_name: rstudio-base # docker exec -it rstudio-base bash
+    container_name: rstudio-base
     ports:
       - "8787:8787"
+      - "8888:8888"
     restart: unless-stopped
     environment:
-      - PASSWORD=toor
-    
-
-  
+      TZ: America/Sao_Paulo
+      PASSWORD: "${RSTUDIO_PASSWORD:-toor}"
+      USERNAME: rstudio
+      JUPYTER_IP: "0.0.0.0"
+      JUPYTER_PORT: "8888"
+      JUPYTER_TOKEN: ""
+      JUPYTER_PASSWORD_REQUIRED: "False"
+      JUPYTER_ALLOW_ORIGIN: "*"

@@ -251,6 +251,7 @@ assets/*
 **/.codex/
 **/.openclaude/
 .ai/
+!.ai/
 !**/lib/
 AGENTS.md
 

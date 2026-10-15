@@ -15,4 +15,3 @@ black
 flake8
 pytest
 pyspark==3.5.1
-json
