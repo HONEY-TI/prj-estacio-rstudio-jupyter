@@ -7,7 +7,7 @@
   "remoteUser": "rstudio",
   "workspaceFolder": "/workspace",
   "updateRemoteUserUID": true,
-  "overrideCommand": true,
+  "overrideCommand": false,
   "initializeCommand": "f=$(ls -t \"${XDG_RUNTIME_DIR}\"/.mutter-Xwaylandauth.* 2>/dev/null | head -n1); if [ -n \"$f\" ]; then cp \"$f\" .devcontainer/.xauth-devc; else : > .xauth-devc; fi",
   "postCreateCommand": "bash setup-codex.sh",
   "updateContentCommand": "sudo post-start.sh ",
