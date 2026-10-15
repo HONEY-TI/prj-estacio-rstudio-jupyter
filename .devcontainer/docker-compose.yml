@@ -15,14 +15,13 @@ services:
       NODE_OPTIONS: "--max-old-space-size=4096"
       GITHUB_TOKEN: ${GITHUB_TOKEN:?GITHUB_TOKEN não definido no .env}
       XAUTHORITY: /tmp/.xauth-devc
-      USERNAME: rstudio
-      PASSWORD: "toor"
-      JUPYTER_IP: 0.0.0.0
+      TZ: America/Sao_Paulo
+      PASSWORD: "${RSTUDIO_PASSWORD:-toor}"
+      JUPYTER_IP: "0.0.0.0"
       JUPYTER_PORT: "8888"
-      JUPYTER_TOKEN: "troque-por-um-token-forte"
+      JUPYTER_TOKEN: ""
       JUPYTER_PASSWORD_REQUIRED: "False"
       JUPYTER_ALLOW_ORIGIN: "*"
-
     env_file:
       - .env      
     ports:
@@ -46,6 +45,7 @@ services:
       options:
         max-size: "10m"
         max-file: "1"
+
 volumes:
   vscode-extensions-shared:
     external: true
