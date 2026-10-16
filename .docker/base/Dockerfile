@@ -7,7 +7,7 @@ FROM apache/spark:3.5.1 AS spark
 FROM alexfariakof/r-packages:latest AS final
 
 # Falha o build se qualquer comando de um pipe falhar
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+#SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # -----------------------------------------------------------------------------
 # Argumentos de build
@@ -54,6 +54,7 @@ RUN apt-get update \
         python3-pip \
         python3-venv \
         curl \
+        zsh \
         ca-certificates \
         openjdk-17-jre-headless \
     && ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime \
@@ -114,69 +115,205 @@ RUN printf '%s\n' \
         >> /usr/local/lib/R/etc/Renviron.site
 
 # =============================================================================
-# Bash global
+# Shell global: bash (/etc/bash.bashrc)
 # =============================================================================
-RUN cat >> /etc/bash.bashrc <<'BASHRC'
+RUN cat >> /etc/bash.bashrc <<'EOF'
 
-export PATH="/bin:/usr/local/bin:/opt/venv/bin:/home/node/.local/bin:$PATH"
+export HISTFILE="$HOME/shell_history/.bash_history"
 export VIRTUAL_ENV="/opt/venv"
-export VIRTUAL_ENV_DISABLE_PROMPT=1
+export PYSPARK_PYTHON="${VIRTUAL_ENV}/bin/python"
+export PYSPARK_DRIVER_PYTHON="${VIRTUAL_ENV}/bin/python"
+export PATH="/bin:/usr/local/bin:/usr/local/sbin:${VIRTUAL_ENV}/bin:${SPARK_HOME}/bin:${SPARK_HOME}/sbin:$HOME/.local/bin:$PATH"
 
+# =========================================================
+# ALIASES
+# =========================================================
 alias cls='clear'
 alias py='python3'
 alias ll='eza -l -h --group --group-directories-first'
-alias la='eza -la -h --group --group-directories-first'
+alias la='eza -la -hs --group --group-directories-first'
 alias lt='eza --tree --level=2 --group --group-directories-first'
 
 function ls() {
-    command eza -la -h \
+    command eza \
+        -la \
+        -h \
         --group \
         --group-directories-first \
-        --color=auto "$@"
+        --color=auto \
+        "$@"
 }
 
 function lsh() {
     local dir="${1:-.}"
-    command eza -la -h \
+
+    command eza \
+        -la \
+        -h \
         --group \
         --group-directories-first \
         --sort=size \
-        --color=auto "$dir"
+        --color=auto \
+        "$dir"
 }
+
+
+# ==========================================
+# VENV + GIT BRANCH NO PROMPT
+# ==========================================
+MY_VENV="/opt/venv"
 
 parse_git_branch() {
     local branch
     branch=$(git branch --show-current 2>/dev/null)
+
     [ -n "$branch" ] && printf " (%s)" "$branch"
 }
 
 set_venv_prompt() {
-    local venv_prompt=''
-    if [ -n "${VIRTUAL_ENV:-}" ]; then
+    local venv_prompt=""
+
+    if [[ -n "${VIRTUAL_ENV:-}" ]]; then
         venv_prompt='\[\e[1;31m\](venv)\[\e[0m\] '
     fi
 
-    PS1='\[\e[1;32m\]┌──\[\e[0m\] '"${venv_prompt}"'\[\e[0;37m\](\[\e[1;34m\]\u\[\e[0;37m\]㉿\[\e[1;32m\]\h\[\e[0;37m\])\[\e[0m\]-[\w\[\e[1;33m\]$(parse_git_branch)\[\e[0;37m\]]\[\e[0m\]\n\[\e[1;32m\]└─\[\e[0m\]\$ '
+    PS1='\[\e[1;32m\]┌──\[\e[0m\] '"$venv_prompt"\
+'\[\e[0;37m\](\[\e[1;34m\]\u\[\e[0;37m\]㉿\[\e[1;32m\]\h\[\e[0;37m\])\[\e[0m\]-'\
+'\[\e[0;37m\][\w\[\e[1;33m\]$(parse_git_branch)\[\e[0;37m\]]\[\e[0m\]'\
+'\n'\
+'\[\e[1;32m\]└─\[\e[0m\]\$ '
 }
 
-activate_venv() {
-    local venv="${1:-/opt/venv}"
 
-    if [ ! -f "$venv/bin/activate" ]; then
-        echo "Erro: virtualenv não encontrado em: $venv"
+function activate() {
+    if [ -f "$MY_VENV/bin/activate" ]; then
+        source "$MY_VENV/bin/activate"
+        set_venv_prompt
+    else
+        echo "Erro: virtualenv não encontrado em $MY_VENV"
         return 1
     fi
+}
 
-    source "$venv/bin/activate"
-    set_venv_prompt
+function desactive() {
+    if [[ -n "$VIRTUAL_ENV" ]] && type deactivate >/dev/null 2>&1; then
+        deactivate
+        set_venv_prompt
+    else
+        echo "Nenhum virtualenv ativo."
+    fi
 }
 
 set_venv_prompt
-BASHRC
+EOF
+
+# =============================================================================
+# Shell global: zsh (/etc/zsh/zshrc)
+# =============================================================================
+RUN cat >> /etc/zshrc <<'EOF'
+export HISTFILE="$HOME/shell_history/.zsh_history"
+export VIRTUAL_ENV="/opt/venv"
+export PYSPARK_PYTHON="${VIRTUAL_ENV}/bin/python"
+export PYSPARK_DRIVER_PYTHON="${VIRTUAL_ENV}/bin/python"
+export PATH="/bin:/usr/local/bin:/usr/local/sbin:${VIRTUAL_ENV}/bin:${SPARK_HOME}/bin:${SPARK_HOME}/sbin:$HOME/.local/bin:$PATH"
+
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=20000
+
+setopt APPEND_HISTORY
+setopt INC_APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS
+setopt PROMPT_SUBST
+
+alias cls='clear'
+alias py='python3'
+alias ll='eza -lh --group --group-directories-first'
+alias la='eza -lah --group --group-directories-first'
+alias lt='eza --tree --level=2 --group'
+
+
+function ls() {
+    command eza \
+        -la \
+        -h \
+        --group \
+        --group-directories-first \
+        --color=auto \
+        "$@"
+}
+
+function lsh() {
+    local dir="${1:-.}"
+
+    command eza \
+        -la \
+        -h \
+        --group \
+        --group-directories-first \
+        --sort=size \
+        --color=auto \
+        "$dir"
+}
+
+MY_VENV="/opt/venv"
+
+activate() {
+    if [[ -f "$MY_VENV/bin/activate" ]]; then
+        source "$MY_VENV/bin/activate"
+    else
+        echo "Erro: virtualenv não encontrado em $MY_VENV"
+        return 1
+    fi
+}
+
+desactive() {
+    if [[ -n "$VIRTUAL_ENV" ]] && type deactivate >/dev/null 2>&1; then
+        deactivate
+    else
+        echo "Nenhum virtualenv ativo."
+    fi
+}
+
+set_prompt() {
+    local git_branch
+    git_branch=$(git branch --show-current 2>/dev/null)
+
+    PROMPT=""
+    PROMPT+="%F{%(#.blue.green)}┌── "
+
+    if [[ -n "$VIRTUAL_ENV" ]]; then
+        PROMPT+="%F{red}%B($(basename "$VIRTUAL_ENV"))%b%f "
+    fi
+
+    PROMPT+="(%B%F{%(#.red.blue)}%n㉿%m%b%F{%(#.blue.green)})"
+    PROMPT+="-[%B%F{reset}%~%b%F{%(#.blue.green)}"
+
+    if [[ -n "$git_branch" ]]; then
+        PROMPT+=" %F{yellow}%B(${git_branch})%b%F{%(#.blue.green)}"
+    fi
+
+    PROMPT+="]"
+    PROMPT+=$'\n'
+    PROMPT+="└─%B%(#.%F{red}#.%F{blue}\$)%b%F{reset} "
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd set_prompt
+EOF
+
 
 # Copia o Bash global para o usuário rstudio
 RUN cp /etc/bash.bashrc /home/rstudio/.bashrc \
     && chown rstudio:rstudio /home/rstudio/.bashrc
+
+# Copia o zsh global para o usuário rstudio
+RUN cp /etc/zshrc /home/rstudio/.zshrc \
+    && chown rstudio:rstudio /home/rstudio/.zshrc
+RUN chsh -s /bin/zsh 2>/dev/null || true;
 
 # =============================================================================
 # JupyterLab como serviço s6

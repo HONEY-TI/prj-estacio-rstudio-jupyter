@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
     environment:
       TZ: America/Sao_Paulo
-      PASSWORD: "${RSTUDIO_PASSWORD:-toor}"
+      PASSWORD: "toor"
       USERNAME: rstudio
       JUPYTER_IP: "0.0.0.0"
       JUPYTER_PORT: "8888"
